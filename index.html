@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>FinMate AI - Smart Financial Assistant</title>
+  <meta name="description" content="Aplikasi manajemen keuangan pribadi cerdas, aman, dan modern untuk generasi muda." />
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Application CSS -->
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="theme-light">
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Loading Overlay -->
+  <div id="global-loader" class="global-loader hidden">
+    <div class="loader-spinner">
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
+    </div>
+    <p id="global-loader-text" class="loader-text">Memproses data dengan aman...</p>
+  </div>
+
+  <!-- ==================== AUTH SCREEN ==================== -->
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-wrapper">
+      <!-- Auth Brand Header -->
+      <div class="auth-brand">
+        <div class="brand-badge">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <h1 class="brand-title">FinMate <span class="gradient-text">AI</span></h1>
+        <p class="brand-tagline">Smart Personal Finance for the Next Generation</p>
+      </div>
+
+      <!-- Auth Card -->
+      <div class="auth-card glass-card">
+        <!-- Auth Tabs -->
+        <div class="auth-tabs">
+          <button type="button" id="tab-btn-login" class="tab-btn active" onclick="uiService.switchAuthTab('login')">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Masuk
+          </button>
+          <button type="button" id="tab-btn-register" class="tab-btn" onclick="uiService.switchAuthTab('register')">
+            <i class="fa-solid fa-user-plus"></i> Daftar Akun
+          </button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="form-login" class="auth-form" onsubmit="event.preventDefault(); authService.handleLogin();">
+          <div class="form-group">
+            <label for="login-email">Email <span class="req">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="fa-regular fa-envelope input-icon"></i>
+              <input type="email" id="login-email" class="form-input" placeholder="nama@email.com" required autocomplete="email" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="login-password">Password <span class="req">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-lock input-icon"></i>
+              <input type="password" id="login-password" class="form-input" placeholder="Minimal 8 karakter" required autocomplete="current-password" />
+              <button type="button" class="btn-toggle-pwd" onclick="uiService.togglePasswordVisibility('login-password', this)" aria-label="Lihat Password">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="label-with-hint">
+              <label for="login-pin">PIN Keamanan (8 Digit) <span class="req">*</span></label>
+              <span class="input-hint">8 angka</span>
+            </div>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-shield-halved input-icon"></i>
+              <input type="password" id="login-pin" class="form-input" placeholder="8 digit angka (contoh: 12345678)" maxlength="8" pattern="\d{8}" inputmode="numeric" required autocomplete="off" />
+              <button type="button" class="btn-toggle-pwd" onclick="uiService.togglePasswordVisibility('login-pin', this)" aria-label="Lihat PIN">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="login-lock-msg" class="alert-box alert-danger hidden">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="login-lock-text">Terlalu banyak percobaan gagal. Silakan tunggu.</span>
+          </div>
+
+          <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block">
+            <span>Masuk ke FinMate</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+
+        <!-- REGISTER FORM -->
+        <form id="form-register" class="auth-form hidden" onsubmit="event.preventDefault(); authService.handleRegister();">
+          <div class="form-group">
+            <label for="reg-name">Nama Lengkap <span class="req">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="fa-regular fa-user input-icon"></i>
+              <input type="text" id="reg-name" class="form-input" placeholder="Contoh: Rian Pratama" required autocomplete="name" maxlength="60" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-status">Status Pengguna <span class="req">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-graduation-cap input-icon"></i>
+              <select id="reg-status" class="form-input select-input" required>
+                <option value="Mahasiswa">Mahasiswa</option>
+                <option value="Pelajar">Pelajar SMA/SMK</option>
+                <option value="Fresh Graduate">Fresh Graduate</option>
+                <option value="Pekerja Muda">Pekerja Muda</option>
+                <option value="Freelancer">Freelancer / Kreator</option>
+                <option value="Lainnya">Umum</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-email">Email <span class="req">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="fa-regular fa-envelope input-icon"></i>
+              <input type="email" id="reg-email" class="form-input" placeholder="nama@email.com" required autocomplete="email" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col">
+              <label for="reg-password">Password <span class="req">*</span></label>
+              <div class="input-icon-wrap">
+                <i class="fa-solid fa-lock input-icon"></i>
+                <input type="password" id="reg-password" class="form-input" placeholder="Min. 8 karakter" required minlength="8" autocomplete="new-password" />
+              </div>
+            </div>
+
+            <div class="form-group col">
+              <label for="reg-password-confirm">Konfirmasi Password <span class="req">*</span></label>
+              <div class="input-icon-wrap">
+                <i class="fa-solid fa-lock input-icon"></i>
+                <input type="password" id="reg-password-confirm" class="form-input" placeholder="Ulangi password" required minlength="8" autocomplete="new-password" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="label-with-hint">
+              <label for="reg-pin">PIN Keamanan (Tepat 8 Digit Angka) <span class="req">*</span></label>
+              <span class="input-hint">Kunci Enkripsi Anda</span>
+            </div>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-shield-halved input-icon"></i>
+              <input type="password" id="reg-pin" class="form-input" placeholder="8 digit angka (contoh: 87654321)" maxlength="8" pattern="\d{8}" inputmode="numeric" required />
+              <button type="button" class="btn-toggle-pwd" onclick="uiService.togglePasswordVisibility('reg-pin', this)" aria-label="Lihat PIN">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="security-notice">
+            <i class="fa-solid fa-lock-open-shield"></i>
+            <p>Data keuangan Anda dienkripsi lokal dengan <strong>Web Crypto API (AES-GCM & PBKDF2)</strong>. Password dan PIN Anda tidak pernah disimpan dalam bentuk teks biasa.</p>
+          </div>
+
+          <button type="submit" id="btn-reg-submit" class="btn btn-primary btn-block">
+            <span>Daftar & Amankan Akun</span>
+            <i class="fa-solid fa-shield-check"></i>
+          </button>
+        </form>
+      </div>
+
+      <!-- Auth Footer Notes -->
+      <footer class="auth-footer">
+        <p><i class="fa-solid fa-shield-heart"></i> FinMate AI • 100% Private, Local Encrypted & Offline-Ready</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN APPLICATION APP ==================== -->
+  <div id="main-app" class="main-app hidden">
+    <!-- Sidebar Desktop / Tablet -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-badge small">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <div class="sidebar-brand-text">
+          <h2>FinMate <span class="gradient-text">AI</span></h2>
+          <span class="badge-role" id="user-role-badge">Mahasiswa</span>
+        </div>
+        <button type="button" class="btn-close-sidebar mobile-only" onclick="uiService.toggleSidebar(false)" aria-label="Tutup Menu">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-item active" data-view="overview" onclick="uiService.navigate('overview')">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Overview</span>
+        </button>
+        <button type="button" class="nav-item" data-view="expenses" onclick="uiService.navigate('expenses')">
+          <i class="fa-solid fa-money-bill-transfer"></i>
+          <span>Expense Tracker</span>
+        </button>
+        <button type="button" class="nav-item" data-view="goals" onclick="uiService.navigate('goals')">
+          <i class="fa-solid fa-bullseye"></i>
+          <span>Financial Goals</span>
+        </button>
+        <button type="button" class="nav-item" data-view="health" onclick="uiService.navigate('health')">
+          <i class="fa-solid fa-heart-pulse"></i>
+          <span>Financial Health</span>
+        </button>
+        <button type="button" class="nav-item" data-view="coach" onclick="uiService.navigate('coach')">
+          <i class="fa-solid fa-robot"></i>
+          <span>AI Financial Coach</span>
+          <span class="nav-pill">Smart</span>
+        </button>
+        <button type="button" class="nav-item" data-view="challenges" onclick="uiService.navigate('challenges')">
+          <i class="fa-solid fa-trophy"></i>
+          <span>Saving Challenge</span>
+        </button>
+        <button type="button" class="nav-item" data-view="reminders" onclick="uiService.navigate('reminders')">
+          <i class="fa-solid fa-bell"></i>
+          <span>Reminders</span>
+          <span id="badge-reminder-count" class="nav-count hidden">0</span>
+        </button>
+        <button type="button" class="nav-item" data-view="profile" onclick="uiService.navigate('profile')">
+          <i class="fa-solid fa-user-gear"></i>
+          <span>Profil & Keamanan</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer User Card -->
+      <div class="sidebar-footer">
+        <div class="user-profile-preview" onclick="uiService.navigate('profile')">
+          <div class="user-avatar" id="sidebar-user-avatar">U</div>
+          <div class="user-info-text">
+            <span class="user-name" id="sidebar-user-name">Pengguna</span>
+            <span class="user-email" id="sidebar-user-email">email@domain.com</span>
+          </div>
+        </div>
+        <button type="button" class="btn-sidebar-logout" onclick="authService.logout()" title="Keluar Akun" aria-label="Keluar">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Sidebar Overlay for mobile -->
+    <div id="sidebar-overlay" class="sidebar-overlay hidden" onclick="uiService.toggleSidebar(false)"></div>
+
+    <!-- Main Content Area -->
+    <div class="main-wrapper">
+      <!-- Top Navbar -->
+      <header class="top-header">
+        <div class="header-left">
+          <button type="button" class="btn-icon mobile-only" onclick="uiService.toggleSidebar(true)" aria-label="Buka Menu">
+            <i class="fa-solid fa-bars-staggered"></i>
+          </button>
+          <div class="header-title-box">
+            <h1 id="page-heading">Dashboard Overview</h1>
+            <p id="page-subheading" class="text-muted">Pantau arus kas dan kesehatan finansial Anda secara real-time</p>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Quick Add Transaction Button -->
+          <button type="button" class="btn btn-primary btn-sm" onclick="uiService.openModal('modal-transaction')">
+            <i class="fa-solid fa-plus"></i>
+            <span class="btn-text-desktop">Catat Transaksi</span>
+          </button>
+
+          <!-- Dark / Light Mode Toggle -->
+          <button type="button" id="btn-theme-toggle" class="btn-icon" onclick="uiService.toggleTheme()" title="Ubah Tema" aria-label="Ubah Tema">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+
+          <!-- Inactivity Session Badge -->
+          <div class="session-badge" title="Sesi aktif dengan enkripsi Web Crypto">
+            <i class="fa-solid fa-lock text-emerald"></i>
+            <span class="session-status">Encrypted</span>
+          </div>
+
+          <!-- Logout Button (Top) -->
+          <button type="button" class="btn-icon text-danger" onclick="authService.logout()" title="Keluar" aria-label="Keluar">
+            <i class="fa-solid fa-power-off"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- VIEW PAGES CONTAINER -->
+      <main class="content-container">
+
+        <!-- ================= VIEW 1: OVERVIEW ================= -->
+        <section id="view-overview" class="app-view active">
+          <!-- Financial Summary 4-Cards Grid -->
+          <div class="summary-cards-grid">
+            <div class="stat-card balance-card">
+              <div class="stat-icon-wrap bg-indigo-subtle">
+                <i class="fa-solid fa-wallet text-indigo"></i>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">Total Saldo Saat Ini</span>
+                <h3 class="stat-value" id="overview-balance">Rp 0</h3>
+                <span class="stat-trend" id="overview-balance-status">
+                  <i class="fa-solid fa-circle-check"></i> Arus Kas Positif
+                </span>
+              </div>
+            </div>
+
+            <div class="stat-card income-card">
+              <div class="stat-icon-wrap bg-emerald-subtle">
+                <i class="fa-solid fa-arrow-down-left text-emerald"></i>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">Total Pemasukan</span>
+                <h3 class="stat-value text-emerald" id="overview-income">Rp 0</h3>
+                <span class="stat-meta" id="overview-income-count">0 Transaksi</span>
+              </div>
+            </div>
+
+            <div class="stat-card expense-card">
+              <div class="stat-icon-wrap bg-rose-subtle">
+                <i class="fa-solid fa-arrow-up-right text-rose"></i>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">Total Pengeluaran</span>
+                <h3 class="stat-value text-rose" id="overview-expense">Rp 0</h3>
+                <span class="stat-meta" id="overview-expense-count">0 Transaksi</span>
+              </div>
+            </div>
+
+            <div class="stat-card savings-card">
+              <div class="stat-icon-wrap bg-amber-subtle">
+                <i class="fa-solid fa-piggy-bank text-amber"></i>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">Total Tabungan & Target</span>
+                <h3 class="stat-value text-amber" id="overview-savings">Rp 0</h3>
+                <span class="stat-meta" id="overview-goals-count">0 Target Aktif</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Health Score Banner & Smart Insights -->
+          <div class="grid-2-cols mt-4">
+            <!-- Health Score Card -->
+            <div class="card glass-card health-banner-card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title"><i class="fa-solid fa-heart-pulse text-indigo"></i> Financial Health Score</h3>
+                  <p class="card-subtitle">Dihitung otomatis dari perbandingan arus kas dan tabungan Anda</p>
+                </div>
+                <button type="button" class="btn btn-outline btn-xs" onclick="uiService.navigate('health')">Detail Analisis &rarr;</button>
+              </div>
+              <div class="health-gauge-container">
+                <div class="gauge-circle-wrap">
+                  <div class="gauge-score-display">
+                    <span id="overview-health-score" class="score-number">100</span>
+                    <span class="score-max">/100</span>
+                  </div>
+                </div>
+                <div class="gauge-info">
+                  <div class="badge-health-status" id="overview-health-badge">Sangat Baik</div>
+                  <p id="overview-health-desc" class="health-summary-text">
+                    Kondisi keuangan Anda sangat stabil. Pengeluaran terkendali dengan rasio tabungan yang sehat.
+                  </p>
+                  <div class="ratio-bars">
+                    <div class="ratio-item">
+                      <span>Rasio Pengeluaran</span>
+                      <strong id="overview-expense-ratio">0%</strong>
+                    </div>
+                    <div class="ratio-item">
+                      <span>Rasio Tabungan</span>
+                      <strong id="overview-savings-ratio">0%</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Smart Financial Insight Widget -->
+            <div class="card glass-card insight-widget-card">
+              <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-brain text-indigo"></i> Smart Financial Insight</h3>
+                <span class="badge-ai">AI Rule Engine</span>
+              </div>
+              <div class="insight-body" id="overview-insight-container">
+                <div class="insight-item">
+                  <div class="insight-icon"><i class="fa-solid fa-lightbulb text-amber"></i></div>
+                  <div class="insight-text">
+                    <h4 id="overview-insight-title">Selamat datang di FinMate AI!</h4>
+                    <p id="overview-insight-desc">Mulai catat transaksi pertamamu untuk mendapatkan analisis dan rekomendasi finansial cerdas yang dipersonalisasi.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer-action">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="uiService.navigate('coach')">
+                  <i class="fa-solid fa-comments"></i> Konsultasi dengan AI Coach &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Charts & Priority Goals -->
+          <div class="grid-2-cols mt-4">
+            <!-- Monthly Cashflow Trend Chart -->
+            <div class="card glass-card">
+              <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-chart-column text-indigo"></i> Arus Kas (Pemasukan vs Pengeluaran)</h3>
+                <span class="badge-tag">Bulan Berjalan</span>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="overview-cashflow-chart"></canvas>
+                <div id="overview-cashflow-empty" class="chart-empty-state hidden">
+                  <i class="fa-solid fa-chart-line"></i>
+                  <p>Belum ada data transaksi untuk ditampilkan pada grafik.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Priority Goal & Saving Streak -->
+            <div class="card glass-card">
+              <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-bullseye text-indigo"></i> Target Prioritas & Streak</h3>
+                <button type="button" class="btn btn-outline btn-xs" onclick="uiService.navigate('goals')">Semua Target</button>
+              </div>
+              
+              <!-- Priority Goal Box -->
+              <div id="overview-priority-goal-box" class="priority-goal-box">
+                <div class="goal-header-row">
+                  <div>
+                    <h4 id="overview-goal-name" class="font-bold">Dana Darurat</h4>
+                    <span id="overview-goal-deadline" class="text-xs text-muted">Deadline: 31 Des 2026</span>
+                  </div>
+                  <span id="overview-goal-percent" class="badge-percent">0%</span>
+                </div>
+                <div class="progress-bar-wrap mt-2">
+                  <div id="overview-goal-bar" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+                <div class="goal-amounts-row mt-2">
+                  <span id="overview-goal-collected" class="text-sm font-semibold">Terkumpul: Rp 0</span>
+                  <span id="overview-goal-target" class="text-sm text-muted">Target: Rp 0</span>
+                </div>
+              </div>
+              <div id="overview-goal-empty" class="empty-state-mini hidden">
+                <i class="fa-solid fa-bullseye"></i>
+                <p>Belum ada target keuangan aktif. Yuk buat target impianmu!</p>
+                <button type="button" class="btn btn-sm btn-primary mt-2" onclick="uiService.openModal('modal-goal')">Buat Target</button>
+              </div>
+
+              <!-- Streak & Challenge Snippet -->
+              <div class="streak-widget mt-3">
+                <div class="streak-badge-wrap">
+                  <div class="streak-fire"><i class="fa-solid fa-fire text-amber"></i></div>
+                  <div>
+                    <div class="streak-title"><strong id="overview-streak-count">0 Hari</strong> Streak Pencatatan</div>
+                    <p class="streak-sub">Konsisten mencatat keuangan membangun disiplin finansial</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Recent Transactions Table -->
+          <div class="card glass-card mt-4">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title"><i class="fa-solid fa-clock-rotate-left text-indigo"></i> Transaksi Terbaru</h3>
+                <p class="card-subtitle">5 Transaksi terakhir yang tercatat</p>
+              </div>
+              <div class="header-actions">
+                <button type="button" class="btn btn-outline btn-xs" onclick="uiService.navigate('expenses')">Lihat Semua Transaksi &rarr;</button>
+              </div>
+            </div>
+            
+            <div class="table-responsive">
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th>Tanggal</th>
+                    <th>Tipe</th>
+                    <th>Kategori</th>
+                    <th>Deskripsi</th>
+                    <th>Nominal</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="overview-recent-tx-body">
+                  <!-- Dynamic render -->
+                </tbody>
+              </table>
+              <div id="overview-tx-empty" class="empty-state hidden">
+                <i class="fa-solid fa-receipt"></i>
+                <p>Belum ada transaksi. Yuk catat transaksi pertamamu sekarang!</p>
+                <button type="button" class="btn btn-primary btn-sm mt-2" onclick="uiService.openModal('modal-transaction')">
+                  <i class="fa-solid fa-plus"></i> Tambah Transaksi
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 2: EXPENSE TRACKER ================= -->
+        <section id="view-expenses" class="app-view hidden">
+          <!-- Control Bar: Search, Filters, Add Button -->
+          <div class="card glass-card">
+            <div class="filter-toolbar">
+              <div class="filter-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="tx-search-input" class="form-input search-input" placeholder="Cari keterangan, kategori, nominal..." oninput="transactionService.handleFilterChange()" />
+              </div>
+
+              <div class="filter-selects-row">
+                <select id="tx-filter-type" class="form-input select-input-sm" onchange="transactionService.handleFilterChange()">
+                  <option value="ALL">Semua Tipe</option>
+                  <option value="INCOME">Pemasukan (+)</option>
+                  <option value="EXPENSE">Pengeluaran (-)</option>
+                </select>
+
+                <select id="tx-filter-category" class="form-input select-input-sm" onchange="transactionService.handleFilterChange()">
+                  <option value="ALL">Semua Kategori</option>
+                  <option value="Makanan">Makanan & Minuman</option>
+                  <option value="Transportasi">Transportasi</option>
+                  <option value="Pendidikan">Pendidikan & Kuliah</option>
+                  <option value="Hiburan">Hiburan & Hangout</option>
+                  <option value="Belanja">Belanja</option>
+                  <option value="Tagihan">Tagihan & Listrik/Wifi</option>
+                  <option value="Tabungan">Tabungan / Investasi</option>
+                  <option value="Uang Saku">Uang Saku / Kiriman</option>
+                  <option value="Gaji">Gaji / Honor</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+
+                <select id="tx-filter-sort" class="form-input select-input-sm" onchange="transactionService.handleFilterChange()">
+                  <option value="date-desc">Tanggal Terbaru</option>
+                  <option value="date-asc">Tanggal Terlama</option>
+                  <option value="amount-desc">Nominal Terbesar</option>
+                  <option value="amount-asc">Nominal Terkecil</option>
+                </select>
+              </div>
+
+              <div class="filter-actions-row">
+                <button type="button" class="btn btn-primary" onclick="uiService.openModal('modal-transaction')">
+                  <i class="fa-solid fa-plus"></i> Tambah Transaksi
+                </button>
+                <button type="button" class="btn btn-outline" onclick="transactionService.exportToCSV()" title="Ekspor CSV">
+                  <i class="fa-solid fa-file-csv"></i> Ekspor CSV
+                </button>
+                <button type="button" class="btn btn-ghost text-danger" onclick="uiService.confirmResetTransactions()" title="Reset Transaksi">
+                  <i class="fa-solid fa-trash-can"></i> Reset Semua
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Filtered Summary Ribbon -->
+          <div class="summary-ribbon mt-3">
+            <div class="ribbon-item">
+              <span class="ribbon-label">Hasil Filter:</span>
+              <strong id="tx-filtered-count">0 Transaksi</strong>
+            </div>
+            <div class="ribbon-item">
+              <span class="ribbon-label">Total Masuk:</span>
+              <strong id="tx-filtered-income" class="text-emerald">Rp 0</strong>
+            </div>
+            <div class="ribbon-item">
+              <span class="ribbon-label">Total Keluar:</span>
+              <strong id="tx-filtered-expense" class="text-rose">Rp 0</strong>
+            </div>
+            <div class="ribbon-item">
+              <span class="ribbon-label">Selisih:</span>
+              <strong id="tx-filtered-net">Rp 0</strong>
+            </div>
+          </div>
+
+          <!-- Transactions Table Card -->
+          <div class="card glass-card mt-3">
+            <div class="table-responsive">
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th>Tanggal</th>
+                    <th>Tipe</th>
+                    <th>Kategori</th>
+                    <th>Deskripsi</th>
+                    <th>Nominal</th>
+                    <th class="text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tx-table-body">
+                  <!-- Dynamic JS rows -->
+                </tbody>
+              </table>
+              <div id="tx-empty-state" class="empty-state hidden">
+                <i class="fa-solid fa-receipt"></i>
+                <p id="tx-empty-text">Belum ada transaksi yang sesuai dengan filter.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category Breakdown Chart Section -->
+          <div class="grid-2-cols mt-4">
+            <div class="card glass-card">
+              <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-chart-pie text-indigo"></i> Distribusi Pengeluaran per Kategori</h3>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="expense-category-chart"></canvas>
+                <div id="expense-category-empty" class="chart-empty-state hidden">
+                  <i class="fa-solid fa-pie-chart"></i>
+                  <p>Belum ada transaksi pengeluaran untuk dianalisis.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card glass-card">
+              <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-list-ol text-indigo"></i> Kategori Pengeluaran Terbesar</h3>
+              </div>
+              <div id="top-categories-list" class="top-categories-list">
+                <!-- Dynamic Render -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 3: FINANCIAL GOALS ================= -->
+        <section id="view-goals" class="app-view hidden">
+          <div class="section-top-bar">
+            <div>
+              <h2 class="section-title">Target & Rencana Impian</h2>
+              <p class="section-desc">Tetapkan target tabungan (Laptop, Dana Darurat, Wisuda) dan pantau progress harian/mingguanmu</p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="uiService.openModal('modal-goal')">
+              <i class="fa-solid fa-plus"></i> Tambah Target Baru
+            </button>
+          </div>
+
+          <!-- Goals Summary Counters -->
+          <div class="goals-summary-strip mt-3">
+            <div class="mini-stat-card">
+              <span class="label">Total Target Finansial</span>
+              <strong id="goals-total-target-amount">Rp 0</strong>
+            </div>
+            <div class="mini-stat-card">
+              <span class="label">Total Terkumpul</span>
+              <strong id="goals-total-collected-amount" class="text-emerald">Rp 0</strong>
+            </div>
+            <div class="mini-stat-card">
+              <span class="label">Rata-rata Progress</span>
+              <strong id="goals-avg-progress" class="text-indigo">0%</strong>
+            </div>
+            <div class="mini-stat-card">
+              <span class="label">Target Selesai</span>
+              <strong id="goals-completed-count" class="text-amber">0</strong>
+            </div>
+          </div>
+
+          <!-- Goals Cards Grid -->
+          <div id="goals-cards-grid" class="goals-grid mt-4">
+            <!-- Dynamic Goals Render -->
+          </div>
+
+          <div id="goals-empty-state" class="empty-state card glass-card mt-4 hidden">
+            <i class="fa-solid fa-bullseye"></i>
+            <h3>Belum Ada Target Keuangan</h3>
+            <p>Memiliki target yang terukur membantu Anda lebih termotivasi dalam mengelola uang dan berhemat.</p>
+            <button type="button" class="btn btn-primary mt-3" onclick="uiService.openModal('modal-goal')">
+              <i class="fa-solid fa-plus"></i> Buat Target Pertamamu
+            </button>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 4: FINANCIAL HEALTH ================= -->
+        <section id="view-health" class="app-view hidden">
+          <div class="health-hero card glass-card">
+            <div class="health-hero-left">
+              <div class="health-badge-main" id="health-page-badge">Sangat Baik</div>
+              <h2 class="health-score-huge" id="health-page-score">100<span>/100</span></h2>
+              <p class="health-status-explanation" id="health-page-summary">
+                Arus kas keuangan Anda sangat sehat dan terkontrol dengan baik.
+              </p>
+            </div>
+            <div class="health-hero-right">
+              <div class="health-metrics-list">
+                <div class="metric-row">
+                  <div class="metric-info">
+                    <span class="metric-name">Tingkat Tabungan (Savings Rate)</span>
+                    <span class="metric-val" id="health-metric-savings-rate">0%</span>
+                  </div>
+                  <div class="progress-bar-wrap">
+                    <div id="health-metric-savings-bar" class="progress-bar-fill bg-emerald" style="width: 0%;"></div>
+                  </div>
+                  <span class="metric-note">Target ideal: &ge; 20% dari total pemasukan</span>
+                </div>
+
+                <div class="metric-row mt-3">
+                  <div class="metric-info">
+                    <span class="metric-name">Beban Pengeluaran (Expense Ratio)</span>
+                    <span class="metric-val" id="health-metric-expense-ratio">0%</span>
+                  </div>
+                  <div class="progress-bar-wrap">
+                    <div id="health-metric-expense-bar" class="progress-bar-fill bg-rose" style="width: 0%;"></div>
+                  </div>
+                  <span class="metric-note">Target ideal: &le; 70% dari total pemasukan</span>
+                </div>
+
+                <div class="metric-row mt-3">
+                  <div class="metric-info">
+                    <span class="metric-name">Ketahanan Saldo Kas (Cash Buffer)</span>
+                    <span class="metric-val" id="health-metric-buffer">Aman</span>
+                  </div>
+                  <div class="progress-bar-wrap">
+                    <div id="health-metric-buffer-bar" class="progress-bar-fill bg-indigo" style="width: 100%;"></div>
+                  </div>
+                  <span class="metric-note">Perbandingan Saldo terhadap Pengeluaran bulanan</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detailed Recommendations based on Real Data -->
+          <div class="mt-4">
+            <h3 class="section-title mb-3"><i class="fa-solid fa-clipboard-check text-indigo"></i> Diagnosis & Rekomendasi FinMate</h3>
+            <div id="health-recommendations-list" class="recommendations-grid">
+              <!-- Dynamic recommendations -->
+            </div>
+          </div>
+
+          <!-- Financial Framework Reference (50-30-20 Rule) -->
+          <div class="card glass-card mt-4">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fa-solid fa-scale-balanced text-indigo"></i> Evaluasi Alokasi Dana (Prinsip 50/30/20)</h3>
+            </div>
+            <div class="rule-evaluation-grid">
+              <div class="rule-card">
+                <div class="rule-header">
+                  <span class="rule-tag bg-indigo-subtle text-indigo">50% Kebutuhan</span>
+                  <span class="rule-actual" id="rule-needs-val">0%</span>
+                </div>
+                <p class="rule-desc">Makanan pokok, kos/tempat tinggal, transportasi harian, tagihan wajib.</p>
+                <div class="rule-status" id="rule-needs-status">Status: Normal</div>
+              </div>
+
+              <div class="rule-card">
+                <div class="rule-header">
+                  <span class="rule-tag bg-amber-subtle text-amber">30% Keinginan</span>
+                  <span class="rule-actual" id="rule-wants-val">0%</span>
+                </div>
+                <p class="rule-desc">Hiburan, langganan streaming, belanja pakaian, nongkrong santai.</p>
+                <div class="rule-status" id="rule-wants-status">Status: Terkendali</div>
+              </div>
+
+              <div class="rule-card">
+                <div class="rule-header">
+                  <span class="rule-tag bg-emerald-subtle text-emerald">20% Tabungan</span>
+                  <span class="rule-actual" id="rule-savings-val">0%</span>
+                </div>
+                <p class="rule-desc">Dana darurat, target impian, investasi, dan tabungan masa depan.</p>
+                <div class="rule-status" id="rule-savings-status">Status: Optimal</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 5: AI FINANCIAL COACH ================= -->
+        <section id="view-coach" class="app-view hidden">
+          <div class="chat-container card glass-card">
+            <!-- Chat Header -->
+            <div class="chat-header">
+              <div class="chat-avatar">
+                <i class="fa-solid fa-robot"></i>
+              </div>
+              <div class="chat-header-info">
+                <h3>FinMate Smart Coach</h3>
+                <span class="chat-status"><span class="status-dot"></span> Siap menganalisis data keuangan pribadimu</span>
+              </div>
+              <button type="button" class="btn btn-ghost btn-xs" onclick="aiCoachService.clearChat()" title="Bersihkan Percakapan">
+                <i class="fa-solid fa-rotate-right"></i> Reset Chat
+              </button>
+            </div>
+
+            <!-- Quick Question Chips -->
+            <div class="quick-questions-strip">
+              <span class="quick-title"><i class="fa-solid fa-bolt"></i> Cepat:</span>
+              <button type="button" class="chip-btn" onclick="aiCoachService.askPreset('Apakah keuanganku sehat?')">Apakah keuanganku sehat?</button>
+              <button type="button" class="chip-btn" onclick="aiCoachService.askPreset('Pengeluaran terbesarku apa?')">Pengeluaran terbesarku apa?</button>
+              <button type="button" class="chip-btn" onclick="aiCoachService.askPreset('Berapa saldo saya saat ini?')">Berapa saldo saya?</button>
+              <button type="button" class="chip-btn" onclick="aiCoachService.askPreset('Bagaimana cara menabung lebih efektif?')">Tips menabung</button>
+              <button type="button" class="chip-btn" onclick="aiCoachService.askPreset('Evaluasi target impian saya')">Evaluasi target impian</button>
+            </div>
+
+            <!-- Chat Messages Scroll Area -->
+            <div id="chat-messages" class="chat-messages">
+              <!-- Default Welcome Message -->
+              <div class="message-bubble bot-message">
+                <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="msg-content">
+                  <p>Halo! Saya <strong>FinMate Smart Financial Coach</strong>. Saya dapat membantu menganalisis arus kas, mendeteksi pos pengeluaran boros, dan memberikan saran menabung yang realistis sesuai data transaksi aslimu.</p>
+                  <p class="mt-2 text-xs text-muted">Silakan ketik pertanyaan Anda di bawah atau pilih tombol pertanyaan cepat di atas!</p>
+                  <span class="msg-time" id="welcome-chat-time">Baru saja</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chat Typing Indicator -->
+            <div id="chat-typing" class="chat-typing hidden">
+              <span></span><span></span><span></span>
+              <span class="typing-text">FinMate sedang menganalisis datamu...</span>
+            </div>
+
+            <!-- Chat Input Bar -->
+            <form id="chat-form" class="chat-input-bar" onsubmit="event.preventDefault(); aiCoachService.handleSendMessage();">
+              <input type="text" id="chat-input" class="form-input" placeholder="Tanyakan seputar keuanganmu (cth: Analisis pengeluaran minggu ini...)" autocomplete="off" />
+              <button type="submit" id="btn-chat-send" class="btn btn-primary" aria-label="Kirim Pesan">
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 6: SAVING CHALLENGES & BADGES ================= -->
+        <section id="view-challenges" class="app-view hidden">
+          <div class="section-top-bar">
+            <div>
+              <h2 class="section-title">Tantangan Menabung & Lencana Finansial</h2>
+              <p class="section-desc">Bangun kebiasaan finansial yang sehat melalui gamifikasi dan tantangan nyata</p>
+            </div>
+            <div class="streak-pill">
+              <i class="fa-solid fa-fire text-amber"></i>
+              <span>Active Streak: <strong id="challenges-streak-num">0 Hari</strong></span>
+            </div>
+          </div>
+
+          <!-- Badges Showcase -->
+          <div class="card glass-card mt-3">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fa-solid fa-medal text-indigo"></i> Koleksi Lencana Finansial Anda</h3>
+              <span class="badge-tag" id="badges-unlocked-count">0 / 6 Terbuka</span>
+            </div>
+            <div class="badges-grid" id="badges-container">
+              <!-- Dynamic Badges -->
+            </div>
+          </div>
+
+          <!-- Active Challenges Grid -->
+          <div class="mt-4">
+            <h3 class="section-title mb-3"><i class="fa-solid fa-flag-checkered text-indigo"></i> Tantangan Finansial Aktif</h3>
+            <div class="challenges-grid" id="challenges-container">
+              <!-- Dynamic Challenges -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 7: REMINDERS ================= -->
+        <section id="view-reminders" class="app-view hidden">
+          <div class="section-top-bar">
+            <div>
+              <h2 class="section-title">Pengingat Jadwal Keuangan</h2>
+              <p class="section-desc">Atur notifikasi pengingat untuk mencatat pengeluaran, evaluasi target, dan bayar tagihan rutin</p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="uiService.openModal('modal-reminder')">
+              <i class="fa-solid fa-plus"></i> Tambah Pengingat
+            </button>
+          </div>
+
+          <!-- Notification Permission Banner -->
+          <div id="notif-perm-banner" class="alert-box alert-info mt-3">
+            <i class="fa-solid fa-bell"></i>
+            <div class="alert-text">
+              <strong>Aktifkan Notifikasi Browser</strong>
+              <p>Izinkan notifikasi agar FinMate dapat mengingatkan Anda tepat waktu saat tab browser dibuka.</p>
+            </div>
+            <button type="button" class="btn btn-outline btn-xs" onclick="reminderService.requestPermission()">Izinkan</button>
+          </div>
+
+          <!-- Reminders List Grid -->
+          <div class="reminders-grid mt-4" id="reminders-list-container">
+            <!-- Dynamic reminders list -->
+          </div>
+
+          <div id="reminders-empty-state" class="empty-state card glass-card mt-4 hidden">
+            <i class="fa-solid fa-bell-slash"></i>
+            <h3>Belum Ada Pengingat</h3>
+            <p>Jadwalkan pengingat agar Anda tidak lupa mencatat transaksi harian dan mengecek target tabungan.</p>
+            <button type="button" class="btn btn-primary mt-3" onclick="uiService.openModal('modal-reminder')">
+              <i class="fa-solid fa-plus"></i> Buat Pengingat Baru
+            </button>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 8: PROFILE & SECURITY ================= -->
+        <section id="view-profile" class="app-view hidden">
+          <div class="grid-2-cols">
+            <!-- Profile Info Card -->
+            <div class="card glass-card">
+              <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-user-circle text-indigo"></i> Informasi Akun</h3>
+              </div>
+              <form id="form-update-profile" onsubmit="event.preventDefault(); authService.handleUpdateProfile();">
+                <div class="form-group">
+                  <label for="profile-name">Nama Lengkap</label>
+                  <input type="text" id="profile-name" class="form-input" required maxlength="60" />
+                </div>
+                <div class="form-group">
+                  <label for="profile-email">Email (Login ID)</label>
+                  <input type="email" id="profile-email" class="form-input" disabled />
+                  <span class="input-hint">Email bersifat permanen sebagai identitas login lokal.</span>
+                </div>
+                <div class="form-group">
+                  <label for="profile-status">Status Pengguna</label>
+                  <select id="profile-status" class="form-input select-input">
+                    <option value="Mahasiswa">Mahasiswa</option>
+                    <option value="Pelajar">Pelajar SMA/SMK</option>
+                    <option value="Fresh Graduate">Fresh Graduate</option>
+                    <option value="Pekerja Muda">Pekerja Muda</option>
+                    <option value="Freelancer">Freelancer / Kreator</option>
+                    <option value="Lainnya">Umum</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Profil
+                </button>
+              </form>
+            </div>
+
+            <!-- Change Password / PIN Card -->
+            <div class="card glass-card">
+              <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-shield-keyhole text-indigo"></i> Keamanan & Kredensial</h3>
+              </div>
+              <p class="text-sm text-muted mb-3">
+                Mengubah password atau PIN akan otomatis mengenkripsi ulang data finansial Anda dengan kunci enkripsi baru.
+              </p>
+              <button type="button" class="btn btn-outline btn-block mb-2" onclick="uiService.openModal('modal-change-password')">
+                <i class="fa-solid fa-key"></i> Ubah Password
+              </button>
+              <button type="button" class="btn btn-outline btn-block" onclick="uiService.openModal('modal-change-pin')">
+                <i class="fa-solid fa-shield-halved"></i> Ubah PIN Keamanan (8 Digit)
+              </button>
+            </div>
+          </div>
+
+          <!-- Backup & Restore Section -->
+          <div class="card glass-card mt-4">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title"><i class="fa-solid fa-database text-indigo"></i> Backup & Restore Data Terenkripsi</h3>
+                <p class="card-subtitle">Unduh cadangan data Anda atau pulihkan dari file JSON yang sudah terenkripsi</p>
+              </div>
+            </div>
+            <div class="grid-2-cols">
+              <div class="backup-action-box">
+                <div class="icon-circle bg-indigo-subtle text-indigo">
+                  <i class="fa-solid fa-file-export"></i>
+                </div>
+                <h4>Ekspor Cadangan (Backup)</h4>
+                <p>Unduh seluruh riwayat transaksi, target, pengingat, dan tantangan dalam format file JSON terenkripsi.</p>
+                <button type="button" class="btn btn-primary btn-sm mt-3" onclick="storageService.exportEncryptedBackup()">
+                  <i class="fa-solid fa-download"></i> Unduh File Backup (.json)
+                </button>
+              </div>
+
+              <div class="backup-action-box">
+                <div class="icon-circle bg-emerald-subtle text-emerald">
+                  <i class="fa-solid fa-file-import"></i>
+                </div>
+                <h4>Pulihkan Data (Restore)</h4>
+                <p>Unggah file cadangan FinMate JSON yang sebelumnya Anda unduh untuk memulihkan seluruh data.</p>
+                <input type="file" id="backup-file-input" accept=".json" class="hidden" onchange="storageService.handleImportBackup(event)" />
+                <button type="button" class="btn btn-outline btn-sm mt-3" onclick="document.getElementById('backup-file-input').click()">
+                  <i class="fa-solid fa-upload"></i> Pilih File Backup JSON
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Danger Zone: Delete Account -->
+          <div class="card glass-card danger-zone mt-4">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title text-danger"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h3>
+                <p class="card-subtitle">Penghapusan akun dan pemusnahan seluruh data finansial lokal secara permanen</p>
+              </div>
+            </div>
+            <div class="danger-content">
+              <p>Tindakan ini tidak dapat dibatalkan. Seluruh data transaksi, target finansial, enkripsi lokal, dan akun Anda akan dihapus dari penyimpanan browser.</p>
+              <button type="button" class="btn btn-danger mt-3" onclick="uiService.openModal('modal-delete-account')">
+                <i class="fa-solid fa-trash-can"></i> Hapus Akun FinMate Secara Permanen
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Bottom Navigation for Mobile -->
+      <nav class="bottom-nav mobile-only">
+        <button type="button" class="bottom-nav-item active" data-view="overview" onclick="uiService.navigate('overview')">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Home</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-view="expenses" onclick="uiService.navigate('expenses')">
+          <i class="fa-solid fa-money-bill-transfer"></i>
+          <span>Transaksi</span>
+        </button>
+        <button type="button" class="bottom-nav-item btn-nav-fab" onclick="uiService.openModal('modal-transaction')" aria-label="Tambah Transaksi">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+        <button type="button" class="bottom-nav-item" data-view="goals" onclick="uiService.navigate('goals')">
+          <i class="fa-solid fa-bullseye"></i>
+          <span>Target</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-view="coach" onclick="uiService.navigate('coach')">
+          <i class="fa-solid fa-robot"></i>
+          <span>AI Coach</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- MODAL: ADD / EDIT TRANSACTION -->
+  <div id="modal-transaction" class="modal-overlay hidden" onclick="if(event.target === this) uiService.closeModal('modal-transaction')">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3 id="modal-tx-title"><i class="fa-solid fa-receipt text-indigo"></i> Catat Transaksi</h3>
+        <button type="button" class="btn-close-modal" onclick="uiService.closeModal('modal-transaction')" aria-label="Tutup">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-transaction" onsubmit="event.preventDefault(); transactionService.handleSaveTransaction();">
+        <input type="hidden" id="tx-id" value="" />
+
+        <!-- Transaction Type Radios -->
+        <div class="tx-type-selector">
+          <label class="tx-type-label">
+            <input type="radio" name="tx-type" id="tx-type-expense" value="EXPENSE" checked onchange="transactionService.handleTypeToggle()" />
+            <span class="tx-type-btn expense-btn">
+              <i class="fa-solid fa-arrow-up-right"></i> Pengeluaran
+            </span>
+          </label>
+          <label class="tx-type-label">
+            <input type="radio" name="tx-type" id="tx-type-income" value="INCOME" onchange="transactionService.handleTypeToggle()" />
+            <span class="tx-type-btn income-btn">
+              <i class="fa-solid fa-arrow-down-left"></i> Pemasukan
+            </span>
+          </label>
+        </div>
+
+        <div class="form-group mt-3">
+          <label for="tx-amount">Nominal (Rp) <span class="req">*</span></label>
+          <div class="input-icon-wrap">
+            <span class="input-prefix">Rp</span>
+            <input type="number" id="tx-amount" class="form-input pl-12" placeholder="0" min="100" max="100000000000" step="100" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="tx-category">Kategori <span class="req">*</span></label>
+          <select id="tx-category" class="form-input select-input" required>
+            <!-- Categories will be dynamically updated based on type -->
+            <option value="Makanan">Makanan & Minuman</option>
+            <option value="Transportasi">Transportasi</option>
+            <option value="Pendidikan">Pendidikan & Kuliah</option>
+            <option value="Hiburan">Hiburan & Hangout</option>
+            <option value="Belanja">Belanja Kebutuhan</option>
+            <option value="Tagihan">Tagihan & Listrik/Wifi</option>
+            <option value="Tabungan">Tabungan / Investasi</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="tx-desc">Keterangan / Catatan <span class="req">*</span></label>
+          <input type="text" id="tx-desc" class="form-input" placeholder="Contoh: Makan siang di kantin, Beli buku modul" required maxlength="100" />
+        </div>
+
+        <div class="form-group">
+          <label for="tx-date">Tanggal Transaksi <span class="req">*</span></label>
+          <input type="date" id="tx-date" class="form-input" required />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="uiService.closeModal('modal-transaction')">Batal</button>
+          <button type="submit" id="btn-save-tx" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Transaksi
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT FINANCIAL GOAL -->
+  <div id="modal-goal" class="modal-overlay hidden" onclick="if(event.target === this) uiService.closeModal('modal-goal')">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3 id="modal-goal-title"><i class="fa-solid fa-bullseye text-indigo"></i> Target Finansial Baru</h3>
+        <button type="button" class="btn-close-modal" onclick="uiService.closeModal('modal-goal')" aria-label="Tutup">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-goal" onsubmit="event.preventDefault(); goalService.handleSaveGoal();">
+        <input type="hidden" id="goal-id" value="" />
+
+        <div class="form-group">
+          <label for="goal-name">Nama Target / Impian <span class="req">*</span></label>
+          <input type="text" id="goal-name" class="form-input" placeholder="Contoh: Beli Laptop Baru, Dana Darurat, Wisuda" required maxlength="60" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col">
+            <label for="goal-target-amount">Target Nominal (Rp) <span class="req">*</span></label>
+            <input type="number" id="goal-target-amount" class="form-input" placeholder="5000000" min="10000" step="1000" required />
+          </div>
+          <div class="form-group col">
+            <label for="goal-collected-amount">Terkumpul Awal (Rp)</label>
+            <input type="number" id="goal-collected-amount" class="form-input" placeholder="0" min="0" step="1000" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="goal-deadline">Batas Waktu (Deadline) <span class="req">*</span></label>
+          <input type="date" id="goal-deadline" class="form-input" required />
+        </div>
+
+        <div class="form-group">
+          <label for="goal-icon">Pilihan Ikon</label>
+          <select id="goal-icon" class="form-input select-input">
+            <option value="fa-laptop">💻 Laptop / Gadget</option>
+            <option value="fa-mobile-screen">📱 Smartphone / Tablet</option>
+            <option value="fa-shield-halved">🛡️ Dana Darurat</option>
+            <option value="fa-graduation-cap">🎓 Pendidikan / Wisuda</option>
+            <option value="fa-bicycle">🚲 Sepeda / Kendaraan</option>
+            <option value="fa-plane-departure">✈️ Liburan / Traveling</option>
+            <option value="fa-house">🏠 Rumah / Tempat Tinggal</option>
+            <option value="fa-gem">💎 Investasi / Emas</option>
+            <option value="fa-star">⭐ Impian Lainnya</option>
+          </select>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="uiService.closeModal('modal-goal')">Batal</button>
+          <button type="submit" id="btn-save-goal" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Target
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD FUNDS TO GOAL -->
+  <div id="modal-deposit-goal" class="modal-overlay hidden" onclick="if(event.target === this) uiService.closeModal('modal-deposit-goal')">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-piggy-bank text-emerald"></i> Tabung ke Target</h3>
+        <button type="button" class="btn-close-modal" onclick="uiService.closeModal('modal-deposit-goal')" aria-label="Tutup">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-deposit-goal" onsubmit="event.preventDefault(); goalService.handleDeposit();">
+        <input type="hidden" id="deposit-goal-id" value="" />
+
+        <div class="deposit-target-preview">
+          <h4 id="deposit-goal-name" class="font-bold">Nama Target</h4>
+          <p id="deposit-goal-status" class="text-xs text-muted">Terkumpul: Rp 0 / Rp 0</p>
+        </div>
+
+        <div class="form-group mt-3">
+          <label for="deposit-amount">Nominal Tabungan Baru (Rp) <span class="req">*</span></label>
+          <input type="number" id="deposit-amount" class="form-input" placeholder="100000" min="1000" step="1000" required />
+        </div>
+
+        <div class="form-checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="deposit-record-tx" checked />
+            <span>Otomatis catat sebagai transaksi pengeluaran (Kategori: Tabungan)</span>
+          </label>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="uiService.closeModal('modal-deposit-goal')">Batal</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-check"></i> Tambahkan ke Tabungan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT REMINDER -->
+  <div id="modal-reminder" class="modal-overlay hidden" onclick="if(event.target === this) uiService.closeModal('modal-reminder')">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3 id="modal-reminder-title"><i class="fa-solid fa-bell text-indigo"></i> Pengingat Keuangan</h3>
+        <button type="button" class="btn-close-modal" onclick="uiService.closeModal('modal-reminder')" aria-label="Tutup">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-reminder" onsubmit="event.preventDefault(); reminderService.handleSaveReminder();">
+        <input type="hidden" id="reminder-id" value="" />
+
+        <div class="form-group">
+          <label for="reminder-title">Judul Pengingat <span class="req">*</span></label>
+          <input type="text" id="reminder-title" class="form-input" placeholder="Contoh: Catat pengeluaran malam ini" required maxlength="60" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col">
+            <label for="reminder-time">Jam Pengingat <span class="req">*</span></label>
+            <input type="time" id="reminder-time" class="form-input" required />
+          </div>
+          <div class="form-group col">
+            <label for="reminder-frequency">Frekuensi</label>
+            <select id="reminder-frequency" class="form-input select-input">
+              <option value="DAILY">Setiap Hari</option>
+              <option value="WEEKLY">Setiap Minggu</option>
+              <option value="MONTHLY">Setiap Bulan</option>
+              <option value="ONCE">Satu Kali</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reminder-notes">Catatan Tambahan</label>
+          <input type="text" id="reminder-notes" class="form-input" placeholder="Opsional: Jangan lupa kumpulkan struk belanja" maxlength="100" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="uiService.closeModal('modal-reminder')">Batal</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Pengingat
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CHANGE PASSWORD -->
+  <div id="modal-change-password" class="modal-overlay hidden" onclick="if(event.target === this) uiService.closeModal('modal-change-password')">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-key text-indigo"></i> Ubah Password</h3>
+        <button type="button" class="btn-close-modal" onclick="uiService.closeModal('modal-change-password')" aria-label="Tutup">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-change-pwd" onsubmit="event.preventDefault(); authService.handleChangePassword();">
+        <div class="form-group">
+          <label for="pwd-current">Password Saat Ini <span class="req">*</span></label>
+          <input type="password" id="pwd-current" class="form-input" required />
+        </div>
+
+        <div class="form-group">
+          <label for="pwd-new">Password Baru (Min. 8 karakter) <span class="req">*</span></label>
+          <input type="password" id="pwd-new" class="form-input" required minlength="8" />
+        </div>
+
+        <div class="form-group">
+          <label for="pwd-new-confirm">Konfirmasi Password Baru <span class="req">*</span></label>
+          <input type="password" id="pwd-new-confirm" class="form-input" required minlength="8" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="uiService.closeModal('modal-change-password')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Password Baru</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CHANGE PIN -->
+  <div id="modal-change-pin" class="modal-overlay hidden" onclick="if(event.target === this) uiService.closeModal('modal-change-pin')">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-shield-halved text-indigo"></i> Ubah PIN Keamanan</h3>
+        <button type="button" class="btn-close-modal" onclick="uiService.closeModal('modal-change-pin')" aria-label="Tutup">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-change-pin" onsubmit="event.preventDefault(); authService.handleChangePin();">
+        <div class="form-group">
+          <label for="pin-current">PIN Saat Ini (8 Digit) <span class="req">*</span></label>
+          <input type="password" id="pin-current" class="form-input" maxlength="8" pattern="\d{8}" inputmode="numeric" required />
+        </div>
+
+        <div class="form-group">
+          <label for="pin-new">PIN Baru (Tepat 8 Digit Angka) <span class="req">*</span></label>
+          <input type="password" id="pin-new" class="form-input" maxlength="8" pattern="\d{8}" inputmode="numeric" required />
+        </div>
+
+        <div class="form-group">
+          <label for="pin-new-confirm">Konfirmasi PIN Baru <span class="req">*</span></label>
+          <input type="password" id="pin-new-confirm" class="form-input" maxlength="8" pattern="\d{8}" inputmode="numeric" required />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="uiService.closeModal('modal-change-pin')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan PIN Baru</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: DELETE ACCOUNT (DANGER ZONE) -->
+  <div id="modal-delete-account" class="modal-overlay hidden" onclick="if(event.target === this) uiService.closeModal('modal-delete-account')">
+    <div class="modal-card glass-card modal-danger">
+      <div class="modal-header">
+        <h3 class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> Konfirmasi Hapus Akun</h3>
+        <button type="button" class="btn-close-modal" onclick="uiService.closeModal('modal-delete-account')" aria-label="Tutup">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-delete-account" onsubmit="event.preventDefault(); authService.handleDeleteAccount();">
+        <div class="alert-box alert-danger">
+          <i class="fa-solid fa-skull-crossbones"></i>
+          <div class="alert-text">
+            <strong>Peringatan Serius!</strong>
+            <p>Seluruh riwayat keuangan, target impian, dan kunci enkripsi lokal Anda akan dimusnahkan secara permanen dan tidak dapat dipulihkan kembali.</p>
+          </div>
+        </div>
+
+        <div class="form-group mt-3">
+          <label for="del-pin">Masukkan PIN Keamanan Anda (8 Digit) <span class="req">*</span></label>
+          <input type="password" id="del-pin" class="form-input" maxlength="8" pattern="\d{8}" inputmode="numeric" required placeholder="8 digit PIN" />
+        </div>
+
+        <div class="form-group">
+          <label for="del-confirm-text">Ketik kata <strong class="text-danger">HAPUS AKUN SAYA</strong> untuk konfirmasi: <span class="req">*</span></label>
+          <input type="text" id="del-confirm-text" class="form-input" required placeholder="HAPUS AKUN SAYA" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="uiService.closeModal('modal-delete-account')">Batal</button>
+          <button type="submit" class="btn btn-danger">
+            <i class="fa-solid fa-trash-can"></i> Hapus Permanen Sekarang
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules (ES Module for Vite & Vercel bundling compatibility) -->
+  <script type="module" src="./script.js"></script>
+</body>
+</html>

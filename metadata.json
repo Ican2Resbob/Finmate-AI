@@ -1,0 +1,6 @@
+{
+  "name": "FinMate AI",
+  "description": "Aplikasi Manajemen Keuangan Pribadi Cerdas & Aman untuk Generasi Muda",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
